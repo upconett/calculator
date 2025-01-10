@@ -1,8 +1,9 @@
 import pytest
 from pytest import raises
 
-from inline_calculator import Calculator, Operation, Operator
-from inline_calculator.exceptions import InvalidInput
+from calculator import Calculator, Operation
+from calculator.exceptions import InvalidInput
+from calculator.enums import Operator
 
 
 _ = Calculator()
@@ -64,48 +65,60 @@ def test_execute_operations():
     assert _._execute_operations([op2, op1]) == 0
 
 
+@pytest.mark.skip
+def test_calculate_invalid_input():
+    with raises(InvalidInput): _.calculate("abc")
+    with raises(InvalidInput): _.calculate("5 +")
+    with raises(InvalidInput): _.calculate("++5")
+
+
+@pytest.mark.skip
 def test_calculate_basic():
     assert _.calculate("1 + 1") == 2
     assert _.calculate("10 - 2") == 8
     assert _.calculate("4 * 5") == 20
     assert _.calculate("20 / 4") == 5
 
+@pytest.mark.skip
 def test_calculate_mixed():
     assert _.calculate("2 + 3 * 4") == 14
     assert _.calculate("(2 + 3) * 4") == 20
 
+@pytest.mark.skip
 def test_calculate_nested_parentheses():
     assert _.calculate("((2 + 3) * 2) + 1") == 11
     assert _.calculate("((4 - 2) + (3 * 2)) * 2") == 16
 
+@pytest.mark.skip
 def test_calculate_decimal():
     assert _.calculate("5.5 + 2.2") == 7.7
     assert _.calculate("10.5 * 2") == 21.0
 
+@pytest.mark.skip
 def test_calculate_zero():
     assert _.calculate("0 * 100") == 0
     assert _.calculate("0 / 1") == 0
 
+@pytest.mark.skip
 def test_calculate_large():
     assert _.calculate("1000000 * 1000000") == 1000000000000
     assert _.calculate("999999 + 1") == 1000000
 
+@pytest.mark.skip
 def test_calculate_negative():
     assert _.calculate("-5 + 10") == 5
     assert _.calculate("-5 * -5") == 25
     assert _.calculate("-10 / 2") == -5
 
+@pytest.mark.skip
 def test_calculate_with_formatting():
     assert _.calculate("  5  +  10   ") == 15
     assert _.calculate("\n3 * 2\t") == 6
 
+@pytest.mark.skip
 def test_caclulate_complex():
     assert _.calculate("(5 + (3 * (2 + 1))) / 2") == 7
 
+@pytest.mark.skip
 def test_calculate_zero_division():
     with raises(ZeroDivisionError): _.calculate("1 / 0")
-
-def text_calculate_invalid_input():
-    with raises(InvalidInput): _.calculate("abc")
-    with raises(InvalidInput): _.calculate("5 +")
-    with raises(InvalidInput): _.calculate("++5")

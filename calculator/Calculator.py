@@ -1,54 +1,18 @@
 from typing import *
-from enum import Enum
-from dataclasses import dataclass
 from decimal import Decimal
 
-from inline_calculator.exceptions import *
+from calculator.types import *
+from calculator.enums import *
+from calculator.exceptions import *
+from calculator import Operation
+from calculator import ExpressionParser
 
 
-Number: TypeAlias = Union[int, float, Decimal]
-StrResult: TypeAlias = str
-MathExpression: TypeAlias = str
-
-
-class Operator(Enum):
-    """ Enum representing arithmetical operators. """
-    ADD = '+'
-    SUB = '-'
-    MUL = '*'
-    DIV = '/'
-
-
-@dataclass
-class Operation:
-    op: Operator
-    x: Union[Decimal, "Operation"]
-    y: Union[Decimal, "Operation"]
-
-    def execute(self) -> Decimal:
-        self._execute_inner()
-        x, y = self.x, self.y
-        match self.op:
-            case Operator.ADD: return x + y
-            case Operator.SUB: return x - y
-            case Operator.MUL: return x * y
-            case Operator.DIV: return x / y
-    
-    def _execute_inner(self):
-        """
-        Execute inner operations
-        if arguments are such.
-        """
-        self.x = self._execute_if_is_operation(self.x)
-        self.y = self._execute_if_is_operation(self.y)
-
-    def _execute_if_is_operation(self, arg: Union[Decimal, "Operation"]) -> Decimal:
-        if isinstance(arg, Operation):
-            return arg.execute()
-        return arg
+Parser = ExpressionParser
 
 
 class Calculator:
+
     def add(self, x: Number, y: Number) -> Number:
         return self._operate(Operator.ADD, x, y)
 
@@ -62,16 +26,10 @@ class Calculator:
         return self._operate(Operator.DIV, x, y)
 
     def calculate(self, expression: MathExpression) -> Number:
-        self._validate_expression(expression)
-        operations = self._parse_expression(expression)
+        Parser.validate(expression)
+        operations = Parser.parse(expression)
         result = self._execute_operations(operations)
         return self._decimal_to_number(result)
-
-    def _validate_expression(self, expression: MathExpression) -> None:
-        ...
-
-    def _parse_expression(self, expression: MathExpression) -> List[Operation]:
-        ...
 
     def _execute_operations(self, operations: List[Operation]) -> Decimal:
         return self._execute_recursively(operations)
