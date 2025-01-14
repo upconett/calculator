@@ -31,3 +31,8 @@ class Operation:
         if isinstance(arg, Operation):
             return arg.execute()
         return arg
+
+    def __repr__(self) -> str:
+        x = float(self.x) if isinstance(self.x, Decimal) else self.x
+        y = float(self.y) if isinstance(self.y, Decimal) else self.y
+        return f"Op({self.op.value}, {x}, {y})"

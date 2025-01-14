@@ -47,7 +47,7 @@ class Calculator:
             return operations[0]
         raise NoOperations
 
-    def _operate(self, op: Operator, x: Number, y: Number) -> StrResult:
+    def _operate(self, op: Operator, x: Number, y: Number) -> Number:
         x, y = self._ensure_decimal(x, y)
         result = Operation(op, x, y).execute()
         return self._decimal_to_number(result)

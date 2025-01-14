@@ -7,3 +7,7 @@ class InvalidSimbol(InvalidInput): pass
 
 class NoOperations(BaseException):
     pass
+
+class IsNotOperator(BaseException): pass
+class IsNotOperand(BaseException): pass
+class IsNotParenthesis(BaseException): pass
