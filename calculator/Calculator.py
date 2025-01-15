@@ -25,11 +25,12 @@ class Calculator:
     def divide(self, x: Number, y: Number) -> Number:
         return self._operate(Operator.DIV, x, y)
 
-    def calculate(self, expression: MathExpression) -> Number:
-        Parser.validate(expression)
+    def calculate(self, expression: MathExpression, return_decimal: bool = False) -> Number:
         operations = Parser.parse(expression)
         result = self._execute_operations(operations)
-        return self._decimal_to_number(result)
+        if not return_decimal:
+            result = self._decimal_to_number(result)
+        return result
 
     def _execute_operations(self, operations: List[Operation]) -> Decimal:
         return self._execute_recursively(operations)

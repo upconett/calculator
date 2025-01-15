@@ -7,9 +7,8 @@ from calculator.enums import *
 @dataclass
 class Operation:
     op: Operator
-    x: Union[Decimal, "Operation"]
-    y: Union[Decimal, "Operation"]
-
+    x: Operand
+    y: Operand
     def execute(self) -> Decimal:
         self._execute_inner()
         x, y = self.x, self.y
@@ -27,7 +26,7 @@ class Operation:
         self.x = self._execute_if_is_operation(self.x)
         self.y = self._execute_if_is_operation(self.y)
 
-    def _execute_if_is_operation(self, arg: Union[Decimal, "Operation"]) -> Decimal:
+    def _execute_if_is_operation(self, arg: Operand) -> Decimal:
         if isinstance(arg, Operation):
             return arg.execute()
         return arg

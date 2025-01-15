@@ -1,7 +1,7 @@
 from typing import *
 from string import digits
 
-from calculator import Operation
+from calculator.Operation import Operation
 from calculator.types import *
 from calculator.enums import *
 from calculator.exceptions import *
@@ -11,16 +11,6 @@ DIGITS = digits
 PARENTHESES = ['(', ')']
 OPERATORS = ['+', '-', '*', '/']
 POINT = '.'
-
-ExpressionMember: TypeAlias = Union[Operator, Decimal, Parenthesis]
-
-
-
-def validate(expression: MathExpression) -> None:
-    expression = _clean_expression(expression)
-    _check_invalid_simbols(expression)
-    levels_number = _count_levels(expression)
-    operators, operands = _count_operators_and_operands(expression)
 
 
 def parse(expression: MathExpression) -> List[Operation]:
@@ -44,44 +34,43 @@ def parse(expression: MathExpression) -> List[Operation]:
         1. reverse the list operations (so that outer operation is of index 0)
         2. return operations
     """
-    expression = _clean_expression(expression)
+    list_of_members = _convert_expression(expression)
+
     operations = []
-    exp = [] # expression that is not string but list of Operands, Operators and Parentheses
-    exp = _convert_expression(expression)
-    while len(exp) > 1:
-        _clean_parenthesis(exp)
-        for i in range(len(exp)):
-            print(exp)
+    while len(list_of_members) > 1:
+        _clean_parenthesis(list_of_members)
+        for i in range(len(list_of_members)):
+            print(list_of_members)
             try:
-                x = _get_next_operand(exp, i)
-                op = _get_next_operator(exp, i+1)
-                y = _get_next_operand(exp, i+2)
-                next_simbol = exp[i+3]
+                x = _get_next_operand(list_of_members, i)
+                op = _get_next_operator(list_of_members, i+1)
+                y = _get_next_operand(list_of_members, i+2)
+                next_simbol = list_of_members[i+3]
                 if (
                     _is_weak_operator(op)
                     and _is_strong_operator(next_simbol)
-                    and isinstance(exp[i+4], Decimal)
+                    and isinstance(list_of_members[i+4], Decimal)
                 ):
-                    op = _get_next_operator(exp, i+3)
-                    z = _get_next_operand(exp, i+4)
+                    op = _get_next_operator(list_of_members, i+3)
+                    z = _get_next_operand(list_of_members, i+4)
                     operation = Operation(op, y, z)
-                    _replace_with_operation(exp, i+2, operation)
+                    _replace_with_operation(list_of_members, i+2, operation)
                 else:
                     operation = Operation(op, x, y)
-                    _replace_with_operation(exp, i, operation)
+                    _replace_with_operation(list_of_members, i, operation)
                 operations.append(operation)
-                i -= 1 # go back 1 unit to use freshly made operation as a new operand
+                break
             except (IsNotOperand, IsNotOperator):
-                while len(exp) > i+1 and not exp[i+1] == Parenthesis.OPENING: # skip to next openning parenthesis
+                while len(list_of_members) > i+1 and not list_of_members[i+1] == Parenthesis.OPENING: # skip to next openning parenthesis
                     i += 1
             except IndexError:
                 break
     operations.reverse()
     return operations
 
+
 def _clean_expression(expression: MathExpression) -> MathExpression:
     return expression.replace(' ', '')
-
 
 def _clean_parenthesis(exp: List[ExpressionMember]):
     i = 0
@@ -90,7 +79,7 @@ def _clean_parenthesis(exp: List[ExpressionMember]):
             # print("try clean", end=" ")
             if (
                 exp[i] == Parenthesis.OPENING
-                and (isinstance(exp[i+1], Union[Operation, Decimal]))
+                and _is_operand(exp[i+1])
                 and exp[i+2] == Parenthesis.CLOSING
             ):
                 # print("cleaned")
@@ -116,7 +105,7 @@ def _is_next_operator(exp: List[ExpressionMember], index: int) -> bool:
 
 def _get_next_operand(exp: List[ExpressionMember], index: int) -> Decimal:
     simbol = exp[index]
-    if not isinstance(simbol, Union[Decimal, Operation]):
+    if not _is_operand(simbol):
         raise IsNotOperand(simbol)
     return simbol
 
@@ -127,10 +116,18 @@ def _get_next_operator(exp: List[ExpressionMember], index: int) -> Operator:
     return simbol
 
 def _convert_expression(expression: MathExpression) -> List[ExpressionMember]:
-    expression = expression.replace(' ', '')
+    expression = _clean_expression(expression)
+    _check_invalid_simbols(expression)
+    converted = _convert_cleaned_expression(expression)
+    _validate_levels(converted)
+    _validate_operators_and_operands(converted)
+    return converted
+
+
+def _convert_cleaned_expression(expression: CleanedExpression) -> ConvertedExpression:
     converted = [Parenthesis.OPENING]
-    i = 0
     counter = 0
+    i = 0
     while i < len(expression) and counter < 200:
         counter += 1
         char = expression[i]
@@ -144,8 +141,45 @@ def _convert_expression(expression: MathExpression) -> List[ExpressionMember]:
             continue
         i += 1
     converted.append(Parenthesis.CLOSING)
+    _merge_minuses(converted)
     return converted
 
+def _merge_minuses(expression: ConvertedExpression) -> ConvertedExpression:
+    i = 0
+    while i < (len(expression)-2):
+        if (
+            _is_operator_minus_decimal(expression, i)
+            or _is_parenthesis_minus_decimal(expression, i)
+        ):
+            expression[i+2] = (Decimal(0) - expression[i+2])
+            expression.pop(i+1)
+        i += 1
+    return expression
+
+    
+def _is_operator_minus_decimal(expression: ConvertedExpression, offset_index: int) -> bool:
+    i = offset_index
+    first_member = expression[i]
+    second_member = expression[i+1]
+    third_member = expression[i+2]
+    print(first_member, second_member, third_member)
+    return (
+        isinstance(first_member, Operator)
+        and second_member == '-'
+        and isinstance(third_member, Decimal)
+    )
+
+def _is_parenthesis_minus_decimal(expression: ConvertedExpression, offset_index: int) -> bool:
+    i = offset_index
+    first_member = expression[i]
+    second_member = expression[i+1]
+    third_member = expression[i+2]
+    print(first_member, second_member, third_member)
+    return (
+        isinstance(first_member, Parenthesis)
+        and second_member == '-'
+        and isinstance(third_member, Decimal)
+    )
 
 def _read_operand(expression: MathExpression, start_index: int) -> Tuple[Decimal, int]:
     str_operand = ""
@@ -202,30 +236,29 @@ def _add_operator(operators: List[List[Operator]], char: str, level: int):
 
 # region validation
 
-def _count_levels(expression: MathExpression) -> int:
-    return _LevelsOf(expression).count()
+def _validate_levels(expression: ConvertedExpression) -> int:
+    _LevelsOf(expression).validate()
 
 class _LevelsOf:
-    def __init__(self, expression: MathExpression):
+    def __init__(self, expression: ConvertedExpression):
         self.expression = expression
         self.max_level = self.level = 0
 
-    def count(self) -> int:
-        for char in self.expression:
-            if _is_parenthesis(char):
-                self._update_level(char)
+    def validate(self) -> None:
+        for member in self.expression:
+            if isinstance(member, Parenthesis):
+                self._update_level(member)
         self._check_if_closed()
-        return self.max_level
 
-    def _update_level(self, char: str):
-        self._change_level(char)
+    def _update_level(self, parenthesis: Parenthesis):
+        self._change_level(parenthesis)
         self._check_if_level_not_negative()
         self._update_max_level()
 
-    def _change_level(self, parentheses: str) -> int:
-        match parentheses:
-            case '(': self.level += 1
-            case ')': self.level -= 1
+    def _change_level(self, parenthesis: Parenthesis):
+        match parenthesis:
+            case Parenthesis.OPENING: self.level += 1
+            case Parenthesis.CLOSING: self.level -= 1
 
     def _check_if_level_not_negative(self):
         if self.level < 0:
@@ -239,52 +272,54 @@ class _LevelsOf:
         self.max_level = max(self.level, self.max_level)
 
 
-def _count_operators(expression: MathExpression) -> int:
+def _count_operators(expression: ConvertedExpression) -> int:
     operators = 0
-    for i in range(len(expression)):
-        char = expression[i]
-        if _is_operator(char):
-            for j in range(i+1, len(expression)):
-                if j == len(expression): break
-                right_char = expression[j]
-                if _is_part_of_operand(right_char):
-                    break
-                if _is_operator(right_char):
-                    raise NotInfixOperator(right_char)
-            else:
-                raise NotInfixOperator("right side")
-            for k in range(i-1, -1, -1):
-                left_char = expression[k]
-                if _is_part_of_operand(left_char):
-                    break
-                if _is_operator(left_char):
-                    raise NotInfixOperator(i, k, left_char)
-            else:
+    i = 1
+    while i < (len(expression)-1):
+        member = expression[i]
+        if isinstance(member, Operator):
+            previous = expression[i-1]
+            next = expression[i+1]
+            print(previous, member, next)
+            if isinstance(previous, Operator) or previous == Parenthesis.OPENING:
                 raise NotInfixOperator("left side")
+            if isinstance(next, Operator) or next == Parenthesis.CLOSING:
+                raise NotInfixOperator("right side")
             operators += 1
+        i += 1
     return operators
 
-def _count_operands(expression: MathExpression) -> int:
-    operands = 0
-    current_operand = ''
-    for char in expression:
+def _raw_convert(expression: MathExpression) -> ConvertedExpression:
+    converted = [Parenthesis.OPENING]
+    counter = 0
+    i = 0
+    while i < len(expression) and counter < 200:
+        counter += 1
+        char = expression[i]
+        if _is_parenthesis(char):
+            converted.append(Parenthesis.determine(char))
+        if _is_operator(char):
+            converted.append(Operator.determine(char))
         if _is_part_of_operand(char):
-            current_operand += char
-        elif current_operand:
-            try:
-                float(current_operand)
-                operands += 1
-            except Exception:
-                raise InvalidOperand(current_operand)
-            current_operand = ''
+            operand, i = _read_operand(expression, i)
+            converted.append(operand)
+            continue
+        i += 1
+    converted.append(Parenthesis.CLOSING)
+    return converted
+
+
+def _count_operands(expression: ConvertedExpression) -> int:
+    return sum(_is_operand(x) for x in expression)
+
+def _try_add_operand(current_operand: str, operands: int) -> int:
     try:
         float(current_operand)
-        operands += 1
-    except Exception as ex:
+        return operands + 1
+    except Exception:
         raise InvalidOperand(current_operand)
-    return operands
 
-def _count_operators_and_operands(expression: MathExpression) -> Tuple[int, int]:
+def _validate_operators_and_operands(expression: ConvertedExpression) -> Tuple[int, int]:
     operators = _count_operators(expression)
     operands = _count_operands(expression)
     if operands != (operators + 1):
@@ -317,3 +352,6 @@ def _is_invalid(char: str) -> bool:
         _is_operator(char),
         _is_whitespace(char),
     ))
+
+def _is_operand(member: ExpressionMember) -> bool:
+    return isinstance(member, Union[Decimal, Operation])

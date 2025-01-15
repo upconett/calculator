@@ -1,5 +1,6 @@
 import pytest
 from pytest import raises
+from decimal import Decimal
 
 from calculator import Calculator, Operation
 from calculator.exceptions import InvalidInput
@@ -7,6 +8,7 @@ from calculator.enums import Operator
 
 
 _ = Calculator()
+D = Decimal
 
 
 def test_add():
@@ -30,7 +32,7 @@ def test_subtract():
     assert _.subtract(1_000_000_000, 999_999_999) == 1
     assert _.subtract(10.5, 2.3) == 8.2
     assert _.subtract(1.0000001, 1.0000000) == 0.0000001
-    assert _.subtract(_.add(0.1, _.add(0.1, 0.1)), 0.3) == 0  # (0.1 + 0.1 + 0.1) - 0.3 == 0 (Decimal logic)
+    assert _.subtract(_.add(0.1, _.add(0.1, 0.1)), 0.3) == 0  # (0.1 + 0.1 + 0.1) - 0.3 == 0
 
 def test_multiply():
     assert _.multiply(10, 1) == 10
@@ -58,19 +60,15 @@ def test_divide():
     assert _.divide(1, 7) == 0.1428571429
     with raises(ZeroDivisionError): _.divide(1, 0)
 
-
 def test_execute_operations():
     op1 = Operation(Operator.ADD, 1, 3)  # (4 - (1 + 3))
     op2 = Operation(Operator.SUB, 4, op1)
-    assert _._execute_operations([op2, op1]) == 0
+    assert _._execute_operations([op2, op1]) == D(0)
 
-
-@pytest.mark.skip
 def test_calculate_invalid_input():
     with raises(InvalidInput): _.calculate("abc")
     with raises(InvalidInput): _.calculate("5 +")
     with raises(InvalidInput): _.calculate("++5")
-
 
 def test_calculate_basic():
     assert _.calculate("1 + 1") == 2
@@ -87,8 +85,15 @@ def test_calculate_nested_parentheses():
     assert _.calculate("((4 - 2) + (3 * 2)) * 2") == 16
 
 def test_calculate_decimal():
-    assert _.calculate("5.5 + 2.2") == 7.7
-    assert _.calculate("10.5 * 2") == 21.0
+    assert _.calculate("5.5 + 2.2", return_decimal=True) == D('7.7')
+    assert _.calculate("10.5 * 2", return_decimal=True) == D('21.0')
+    assert _.calculate("10 / (3 + 3 * 9)", return_decimal=True) == D('10') / D('30')
+
+def test_calculate_difficult_decimal():
+    difficult_expression_1 = "10 + 2 - 3 * 4 / 5 + 6 - 7 * 8 / 9"
+    difficult_expression_2 = "1 + 2 - 3 + 4 - 5 + 6 - 7 + 8 - 9 + (10 * (20 / (30 - (40 + (50 * 60)))))"
+    assert _.calculate(difficult_expression_1, return_decimal=True) == D('9.377777777777777777777777778')
+    assert _.calculate(difficult_expression_2, return_decimal=True) == D('-3.066445182724252491694352159')
 
 def test_calculate_zero():
     assert _.calculate("0 * 100") == 0
@@ -112,3 +117,11 @@ def test_caclulate_complex():
 
 def test_calculate_zero_division():
     with raises(ZeroDivisionError): _.calculate("1 / 0")
+
+def test_calculate_difficult():
+    assert _.calculate("1000000000 * 2 + 300000000 - 500000000 / 2") == 2000000000 + 300000000 - 250000000
+    assert _.calculate("(((10 + 20) * (30 / 2)) - (5 * 5)) + (3 * (2 + 1))") == (((10 + 20) * (30 / 2)) - (5 * 5)) + (3 * (2 + 1))
+    assert _.calculate("2 + (3 * (4 + (5 * (6 - (7 + 8)))))") == 2 + (3 * (4 + (5 * (6 - (7 + 8)))))
+    assert _.calculate("1.0000001 + 2.0000002 - 3.0000003") == 0
+    assert _.calculate("1 / 0.0000001") == 10000000.0
+    assert _.calculate("(1.5 + 2) * (3 - 4.5) / 2") == (1.5 + 2) * (3 - 4.5) / 2
