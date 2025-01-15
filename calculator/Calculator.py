@@ -13,19 +13,20 @@ Parser = ExpressionParser
 
 class Calculator:
 
-    def add(self, x: Number, y: Number, return_decimal: bool = False) -> Number | Decimal:
+    def add(self, x: Number, y: Number, return_decimal: bool = False) -> Number:
         return self._operate(Operator.ADD, x, y, return_decimal)
 
-    def subtract(self, x: Number, y: Number, return_decimal: bool = False) -> Number | Decimal:
+    def subtract(self, x: Number, y: Number, return_decimal: bool = False) -> Number:
         return self._operate(Operator.SUB, x, y, return_decimal)
 
-    def multiply(self, x: Number, y: Number, return_decimal: bool = False) -> Number | Decimal:
+    def multiply(self, x: Number, y: Number, return_decimal: bool = False) -> Number:
         return self._operate(Operator.MUL, x, y, return_decimal)
 
-    def divide(self, x: Number, y: Number, return_decimal: bool = False) -> Number | Decimal:
+    def divide(self, x: Number, y: Number, return_decimal: bool = False) -> Number:
         return self._operate(Operator.DIV, x, y, return_decimal)
 
-    def calculate(self, expression: MathExpression, return_decimal: bool = False) -> Number | Decimal:
+
+    def calculate(self, expression: MathExpression, return_decimal: bool = False) -> Number:
         operations = Parser.parse(expression)
         result = self._execute_operations(operations)
         if not return_decimal:
