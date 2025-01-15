@@ -13,24 +13,25 @@ Parser = ExpressionParser
 
 class Calculator:
 
-    def add(self, x: Number, y: Number) -> Number:
-        return self._operate(Operator.ADD, x, y)
+    def add(self, x: Number, y: Number, return_decimal: bool = False) -> Number | Decimal:
+        return self._operate(Operator.ADD, x, y, return_decimal)
 
-    def subtract(self, x: Number, y: Number) -> Number:
-        return self._operate(Operator.SUB, x, y)
+    def subtract(self, x: Number, y: Number, return_decimal: bool = False) -> Number | Decimal:
+        return self._operate(Operator.SUB, x, y, return_decimal)
 
-    def multiply(self, x: Number, y: Number) -> Number:
-        return self._operate(Operator.MUL, x, y)
+    def multiply(self, x: Number, y: Number, return_decimal: bool = False) -> Number | Decimal:
+        return self._operate(Operator.MUL, x, y, return_decimal)
 
-    def divide(self, x: Number, y: Number) -> Number:
-        return self._operate(Operator.DIV, x, y)
+    def divide(self, x: Number, y: Number, return_decimal: bool = False) -> Number | Decimal:
+        return self._operate(Operator.DIV, x, y, return_decimal)
 
-    def calculate(self, expression: MathExpression, return_decimal: bool = False) -> Number:
+    def calculate(self, expression: MathExpression, return_decimal: bool = False) -> Number | Decimal:
         operations = Parser.parse(expression)
         result = self._execute_operations(operations)
         if not return_decimal:
             result = self._decimal_to_number(result)
         return result
+
 
     def _execute_operations(self, operations: List[Operation]) -> Decimal:
         return self._execute_recursively(operations)
@@ -48,10 +49,12 @@ class Calculator:
             return operations[0]
         raise NoOperations
 
-    def _operate(self, op: Operator, x: Number, y: Number) -> Number:
+    def _operate(self, op: Operator, x: Number, y: Number, return_decimal: bool) -> Number | Decimal:
         x, y = self._ensure_decimal(x, y)
         result = Operation(op, x, y).execute()
-        return self._decimal_to_number(result)
+        if not return_decimal:
+            result = self._decimal_to_number(result)
+        return result
 
     def _ensure_decimal(self, x: Number, y: Number) -> Tuple[Decimal, Decimal]:
         x = self._number_to_decimal(x)
