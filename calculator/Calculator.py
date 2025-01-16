@@ -2,13 +2,8 @@ from typing import *
 from decimal import Decimal
 
 from calculator.types import *
-from calculator.enums import *
 from calculator.exceptions import *
-from calculator import Operation
-from calculator import ExpressionParser
-
-
-Parser = ExpressionParser
+from calculator import ExpressionParser, ExpressionAnalyzer
 
 
 class Calculator:
@@ -27,8 +22,9 @@ class Calculator:
 
 
     def calculate(self, expression: MathExpression, return_decimal: bool = False) -> Number:
-        operations = Parser.parse(expression)
-        result = self._execute_operations(operations)
+        expression_members = ExpressionParser.parse(expression)
+        analyzed_expression = ExpressionAnalyzer.analyze(expression_members)
+        result = analyzed_expression.outer_operation.execute()
         if not return_decimal:
             result = self._decimal_to_number(result)
         return result

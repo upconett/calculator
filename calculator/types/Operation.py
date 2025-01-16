@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from calculator.types import *
-from calculator.enums import *
+from calculator.types.aliases import *
+from calculator.types.enums import *
 
 
 @dataclass

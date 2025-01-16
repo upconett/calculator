@@ -2,9 +2,9 @@ import pytest
 from pytest import raises
 from decimal import Decimal
 
-from calculator import Calculator, Operation
-from calculator.exceptions import InvalidInput
-from calculator.enums import Operator
+from calculator import Calculator
+from calculator.exceptions import *
+from calculator.types import Operator, Operation
 
 
 _ = Calculator()
@@ -66,9 +66,9 @@ def test_execute_operations():
     assert _._execute_operations([op2, op1]) == D(0)
 
 def test_calculate_invalid_input():
-    with raises(InvalidInput): _.calculate("abc")
-    with raises(InvalidInput): _.calculate("5 +")
-    with raises(InvalidInput): _.calculate("++5")
+    with raises(UnknownSimbol): _.calculate("abc")
+    with raises(NotInfixOperator): _.calculate("5 +")
+    with raises(NotInfixOperator): _.calculate("++5")
 
 def test_calculate_basic():
     assert _.calculate("1 + 1") == 2
@@ -125,3 +125,4 @@ def test_calculate_difficult():
     assert _.calculate("1.0000001 + 2.0000002 - 3.0000003") == 0
     assert _.calculate("1 / 0.0000001") == 10000000.0
     assert _.calculate("(1.5 + 2) * (3 - 4.5) / 2") == (1.5 + 2) * (3 - 4.5) / 2
+    assert _.calculate("-1 + 43 * (4 - 5 * (-(3 - 4 * 10 - (4 + 1) * 3 * 9)))") == -36809
