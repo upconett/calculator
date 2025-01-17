@@ -115,17 +115,21 @@ def _merge_minus_after_index(index: int, members: List[ExpressionMember]):
         members.pop(index+1)
 
 def _pattern__operator_minus_decimal(members: List[ExpressionMember], on_index: int) -> bool:
-    return _pattern__something_minus_decimal(members, Operator, on_index)
-
-def _pattern__parenthesis_minus_decimal(members: List[ExpressionMember], on_index: int) -> bool:
-    return _pattern__something_minus_decimal(members, Parenthesis, on_index)
-
-def _pattern__something_minus_decimal(members: List[ExpressionMember], thing: Type, on_index: int) -> bool:
     first_member = members[on_index]
     second_member = members[on_index+1]
     third_member = members[on_index+2]
     return (
-        isinstance(first_member, thing)
+        isinstance(first_member, Operator)
+        and second_member == '-'
+        and isinstance(third_member, Decimal)
+    )
+
+def _pattern__parenthesis_minus_decimal(members: List[ExpressionMember], on_index: int) -> bool:
+    first_member = members[on_index]
+    second_member = members[on_index+1]
+    third_member = members[on_index+2]
+    return (
+        first_member == Parenthesis.OPENING
         and second_member == '-'
         and isinstance(third_member, Decimal)
     )

@@ -126,3 +126,4 @@ def test_calculate_difficult():
     assert _.calculate("1 / 0.0000001") == 10000000.0
     assert _.calculate("(1.5 + 2) * (3 - 4.5) / 2") == (1.5 + 2) * (3 - 4.5) / 2
     assert _.calculate("-1 + 43 * (4 - 5 * (-(3 - 4 * 10 - (4 + 1) * 3 * 9)))") == -36809
+    assert _.calculate("1 + (1+1) - 1") == 2
